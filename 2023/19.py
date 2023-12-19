@@ -3,10 +3,6 @@
 from dataclasses import dataclass
 from functools import reduce
 
-@dataclass(eq = True, frozen = True)
-class Part:
-	fields: dict
-
 @dataclass
 class Rule:
 	check: str
@@ -26,7 +22,7 @@ def parse_part(string):
 	fields = {}
 	for key, value in [substring.split('=') for substring in string.split(',')]:
 		fields[key] = int(value)
-	return Part(fields)
+	return fields
 
 def parse_input(filename):
 	file = open(filename, 'r')
@@ -54,7 +50,7 @@ def evaluate(check, part):
 	comparison = check[1]
 	value = int(check[2:])
 
-	field_value = part.fields[field]
+	field_value = part[field]
 	return field_value < value if comparison == '<' else field_value > value
 
 def solve_1(filename):
@@ -67,7 +63,7 @@ def solve_1(filename):
 			for rule in workflow:
 				if evaluate(rule.check, part):
 					if rule.dest == 'A':
-						xmas_sum += sum(part.fields.values())
+						xmas_sum += sum(part.values())
 						workflow = None
 					elif rule.dest == 'R':
 						workflow = None
@@ -76,57 +72,53 @@ def solve_1(filename):
 					break
 	print(filename, 'xmas_sum', xmas_sum)
 
-def acceptance(workflows, workflow_id, part_interval):
+def acceptance(workflows, workflow_id, part_intervals):
 	if workflow_id == 'A':
-		return reduce(lambda prod, interval: prod * (interval[1] - interval[0] + 1), part_interval.fields.values(), 1)
+		return reduce(lambda prod, interval: prod * (interval[1] - interval[0] + 1), part_intervals.values(), 1)
 	if workflow_id == 'R':
 		return 0
 
 	sum_acceptance = 0
 	for rule in workflows[workflow_id]:
 		if rule.check == None:
-			sum_acceptance += acceptance(workflows, rule.dest, part_interval)
+			sum_acceptance += acceptance(workflows, rule.dest, part_intervals)
 			break
 
 		field = rule.check[0]
 		comparison = rule.check[1]
 		value = int(rule.check[2:])
 
-		interval = part_interval.fields[field]
+		interval = part_intervals[field]
 		if comparison == '<':
 			if interval[1] < value:
-				sum_acceptance += acceptance(workflows, rule.dest, part_interval)
+				sum_acceptance += acceptance(workflows, rule.dest, part_intervals)
 			elif interval[0] <= value and value <= interval[1]:
 				in_interval = (interval[0], value - 1)
-				in_fields = part_interval.fields.copy()
+				in_fields = part_intervals.copy()
 				in_fields[field] = in_interval
-				sum_acceptance += acceptance(workflows, rule.dest, Part(in_fields))
+				sum_acceptance += acceptance(workflows, rule.dest, in_fields)
 
 				out_interval = (value, interval[1])
-				out_fields = part_interval.fields.copy()
-				out_fields[field] = out_interval
-				part_interval = Part(out_fields)
+				part_intervals[field] = out_interval
 		else: # comparison == '>'
 			if interval[0] > value:
-				sum_acceptance += acceptance(workflows, rule.dest, part_interval)
+				sum_acceptance += acceptance(workflows, rule.dest, part_intervals)
 			elif interval[0] <= value and value <= interval[1]:
 				in_interval = (value + 1, interval[1])
-				in_fields = part_interval.fields.copy()
+				in_fields = part_intervals.copy()
 				in_fields[field] = in_interval
-				sum_acceptance += acceptance(workflows, rule.dest, Part(in_fields))
+				sum_acceptance += acceptance(workflows, rule.dest, in_fields)
 
 				out_interval = (interval[0], value)
-				out_fields = part_interval.fields.copy()
-				out_fields[field] = out_interval
-				part_interval = Part(out_fields)
+				part_intervals[field] = out_interval
 
 	return sum_acceptance
 
 def solve_2(filename):
 	(workflows, _) = parse_input(filename)
 
-	part_interval = Part({'x': (1, 4000), 'm': (1, 4000), 'a': (1, 4000), 's': (1, 4000)})
-	print(filename, 'sum_acceptance', acceptance(workflows, 'in', part_interval))
+	part_intervals = {'x': (1, 4000), 'm': (1, 4000), 'a': (1, 4000), 's': (1, 4000)}
+	print(filename, 'sum_acceptance', acceptance(workflows, 'in', part_intervals))
 
 solve_1('19_sample.txt')
 solve_1('19_input.txt')
