@@ -1,19 +1,5 @@
 # https://adventofcode.com/2023/day/17
 
-from copy import deepcopy
-
-def calculate_neighbors(grid, point):
-	neighbors = {}
-	if point[0] > 0:
-		neighbors['U'] = (point[0] - 1, point[1])
-	if point[0] < len(grid) - 1:
-		neighbors['D'] = (point[0] + 1, point[1])
-	if point[1] > 0:
-		neighbors['L'] = (point[0], point[1] - 1)
-	if point[1] < len(grid[0]) - 1:
-		neighbors['R'] = (point[0], point[1] + 1)
-	return neighbors
-
 def build_initial_cost(cost):
 	return {'U': {0: cost}, 'D': {0: cost}, 'L': {0: cost}, 'R': {0: cost}}
 
@@ -24,14 +10,13 @@ def opposite_direction(direction):
 	if direction == 'D': return 'U'
 	return None
 
-def add_cost(cost_map, pos, direction, movement, cost):
+def add_cost(cost_map, min_initial_move, pos, direction, movement, cost):
 	added = False
 	for ite_direction, ite_costs in cost_map[pos].items():
 		if ite_direction == direction:
 			skip = False
-			for ite_movement in range(0, movement):
+			for ite_movement in range(0 if min_initial_move == 1 else 1, movement):
 				if ite_movement in ite_costs and cost >= ite_costs[ite_movement]:
-					return False
 					skip = True
 					break
 			if skip:
@@ -39,18 +24,12 @@ def add_cost(cost_map, pos, direction, movement, cost):
 			if movement not in ite_costs or cost < ite_costs[movement]:
 				ite_costs[movement] = cost
 				added = True
-			# for ite_movement in range(movement + min_initial_move, max_moves + 1):
-			# 	if ite_movement in ite_costs and cost <= ite_costs[ite_movement]:
-			# 		ite_costs.pop(ite_movement)
-			# 		added = True
-		else: # ite_direction != direction:
-			if opposite_direction(direction) == ite_direction:
-				continue
+		elif ite_direction != opposite_direction(direction):
 			if 0 not in ite_costs or cost < ite_costs[0]:
 				ite_costs[0] = cost
 				added = True
 
-				# for ite_movement in range(min_initial_move, max_moves + 1):
+				# for ite_movement in range(1, 3 + 1):
 				# 	if ite_movement in ite_costs and cost <= ite_costs[ite_movement]:
 				# 		ite_costs.pop(ite_movement)
 	return added
@@ -103,7 +82,7 @@ def my_star(grid, start, end, min_initial_move, max_moves):
 					cost_map[neighbor][direction] = {current_movement + movement: neighbor_cost}
 					cost_map[neighbor][opposite_direction(direction)] = {0: INFINITY}
 					if DEBUG: print('first neighbor!', cost_map[neighbor])
-				elif add_cost(cost_map, neighbor, direction, current_movement + movement, neighbor_cost):
+				elif add_cost(cost_map, min_initial_move, neighbor, direction, current_movement + movement, neighbor_cost):
 					if DEBUG: print('updated neighbor!', cost_map[neighbor])
 				else:
 					if DEBUG: print('bad neighbor...')
@@ -133,4 +112,4 @@ solve_1('17_input.txt') # 684
 
 solve_2('17_sample.txt') # 94
 solve_2('17_sample2.txt') # 71
-solve_2('17_input.txt') # ? < 824
+solve_2('17_input.txt') # 822
