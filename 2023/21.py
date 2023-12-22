@@ -76,19 +76,19 @@ def solve_2(filename, steps):
 
 	print(filename, 'steps', steps, 'infinite garden plots', plots)
 
-# solve_1('21_sample.txt', 1)
-# solve_1('21_sample.txt', 2)
-# solve_1('21_sample.txt', 3)
-# solve_1('21_sample.txt', 4)
-# solve_1('21_sample.txt', 5)
-# solve_1('21_sample.txt', 6)
-# solve_1('21_input.txt', 64)
+solve_1('21_sample.txt', 1) # 2
+solve_1('21_sample.txt', 2) # 4
+solve_1('21_sample.txt', 3) # 6
+solve_1('21_sample.txt', 4) # 9
+solve_1('21_sample.txt', 5) # 13
+solve_1('21_sample.txt', 6) # 16
+solve_1('21_input.txt', 64) # 3716
 
-solve_2('21_sample.txt', 6)
-solve_2('21_sample.txt', 10)
-solve_2('21_sample.txt', 50)
-solve_2('21_sample.txt', 100)
-solve_2('21_sample.txt', 500)
-solve_2('21_sample.txt', 1000)
-solve_2('21_sample.txt', 5000)
-solve_2('21_input.txt', 26501365)
+solve_2('21_sample.txt', 6) # 16
+solve_2('21_sample.txt', 10) # 50
+solve_2('21_sample.txt', 50) # 1594
+solve_2('21_sample.txt', 100) # 6536
+solve_2('21_sample.txt', 500) # 167004
+solve_2('21_sample.txt', 1000) # 668697
+solve_2('21_sample.txt', 5000) # 16733044
+# solve_2('21_input.txt', 26501365) # ???
