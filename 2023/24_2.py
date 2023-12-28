@@ -1,94 +1,138 @@
 # https://adventofcode.com/2023/day/24
 
+import decimal
+import numpy as np
+
+decimal.getcontext().prec = 100
+
 def parse_input(filename):
 	file = open(filename, 'r')
 	lines = file.readlines()
 	hailstones = []
 	for line in [line.strip() for line in lines]:
 		pos, vel = line.split(' @ ')
-		pos = tuple([int(value) for value in pos.split(', ')])
-		vel = tuple([int(value) for value in vel.split(', ')])
+		pos = [decimal.Decimal(value) for value in pos.split(', ')]
+		vel = [decimal.Decimal(value) for value in vel.split(', ')]
 		hailstones.append((pos, vel))
 	return hailstones
 
 def advance_by(hail, t):
 	pos, vel = hail
-	return (pos[0] + vel[0] * t, pos[1] + vel[1] * t, pos[2] + vel[2] * t)
+	return [pos[0] + vel[0] * t, pos[1] + vel[1] * t, pos[2] + vel[2] * t]
+
+def intify(v):
+	gcd = np.gcd.reduce(v)
+	return np.divide(v, [gcd, gcd, gcd])
+
+def normal(a, b, c):
+	return np.cross(np.subtract(b, a), np.subtract(c, a))
+
+def normalized(v):
+	return v / np.linalg.norm(v)
+
+def get_contact_point(normal, plane_dot, a1, a2):
+	direction_a = np.subtract(a2, a1)
+	normalized_direction_a = normalized(direction_a)
+
+	return np.add(a1, normalized_direction_a * np.dot(normal, np.subtract(plane_dot, a1)) / np.dot(normal, normalized_direction_a))
+
+# https://stackoverflow.com/a/74576891
+def intersect_line_line(a1, a2, b1, b2):
+    direction_a = np.subtract(a1, a2)
+    direction_b = np.subtract(b1, b2)
+    line = np.cross(direction_a, direction_b);
+    cross_line_a = np.cross(line, direction_a);
+    cross_line_b = np.cross(line, direction_b);
+
+    return [get_contact_point(cross_line_a, a1, b1, b2), get_contact_point(cross_line_b, b1, a1, a2)]
 
 def solve(filename):
-	global DEBUG
 	hailstones = parse_input(filename)
-	if DEBUG:
-		for hail in hailstones: print(hail)
 
-	min_x, max_x = None, None
-	min_y, max_y = None, None
-	min_z, max_z = None, None
-	for hail in hailstones:
-		# pos_at_1 = advance_by(hail, 1)
-		pos_at_1 = hail[0]
-		if hail[1][0] > 0:
-			max_x = pos_at_1[0] if max_x == None or pos_at_1[0] > max_x else max_x
-		if hail[1][0] < 0:
-			min_x = pos_at_1[0] if min_x == None or pos_at_1[0] < min_x else min_x
-		if hail[1][1] > 0:
-			max_y = pos_at_1[1] if max_y == None or pos_at_1[1] > max_y else max_y
-		if hail[1][1] < 0:
-			min_y = pos_at_1[1] if min_y == None or pos_at_1[1] < min_y else min_y
-		if hail[1][2] > 0:
-			max_z = pos_at_1[2] if max_z == None or pos_at_1[2] > max_z else max_z
-		if hail[1][2] < 0:
-			min_z = pos_at_1[2] if min_z == None or pos_at_1[2] < min_z else min_z
-		pass
+	# https://math.stackexchange.com/a/2789339
+	B1 = hailstones[1][0]
+	B2 = advance_by(hailstones[1], 1)
+	print('B', B1, B2)
+	C1 = hailstones[2][0]
+	C2 = advance_by(hailstones[2], 1)
+	print('C', C1, C2)
 
-	if DEBUG:
-		print('rock throw must be within:')
-		print(min_x, '<= x <=', max_x)
-		print(min_y, '<= y <=', max_y)
-		print(min_z, '<= z <=', max_z)
+	def trace_line_at(t):
+		A = advance_by(hailstones[0], t)
+		normal1 = normal(A, B1, B2)
+		normal2 = normal(A, C1, C2)
+		if DEBUG: print('normals', normal1, normal2)
+		direction = np.cross(normal1, normal2)
+		if DEBUG: print('direction', direction)
+		if direction[0] == 0 and direction[1] == 0 and direction[2] == 0:
+			raise ValueError('Direction is 0, 0, 0')
 
-	# hailstones_over_time = []
-	# for t in range(1, len(hailstones) + 1):
-	# 	hailstones_at_t = {}
-	# 	for hail in hailstones:
-	# 		pos_at_t = advance_by(hail, t)
-	# 		if DEBUG and pos_at_t in hailstones_at_t: raise ValueError("Conflict!")
-	# 		hailstones_at_t[pos_at_t] = hail
-	# 	hailstones_over_time.append(hailstones_at_t)
+		A1 = A + direction * 10000
+		if DEBUG: print('A', A, A1)
 
-	# if DEBUG:
-	# 	print('hailstones_over_time')
-	# 	for t, hails in enumerate(hailstones_over_time):
-	# 		print(t + 1, hails)
+		error = None
+		for i, hail in enumerate(hailstones):
+			x = intersect_line_line(A, A1, hail[0], advance_by(hail, 10))
+			error = abs(x[0][0] - x[1][0]) + abs(x[0][1] - x[1][1]) + abs(x[0][2] - x[1][2])
+			if error > EPSILON:
+				if DEBUG or i != 3:
+					print('failed at', i, 'error', error)
+				break
+		return (direction, error)
 
-	# for hail1 in hailstones:
-	# 	for hail2 in hailstones:
-	# 		if hail1 == hail2:
-	# 			continue
+	current_t = 1
+	delta_t = 1
+	last_error = float('inf')
+	min_t, max_t = None, None
+	while True:
+		direction, error = trace_line_at(current_t)
+		if error < EPSILON:
+			print('found the sucker!', current_t, direction)
+			break
+		if error < last_error:
+			delta_t *= 10
+			current_t += delta_t
+			last_error = error
+		else:
+			min_t = current_t - delta_t
+			max_t = current_t
+			break
+	if DEBUG: print('t is within', min_t, max_t)
 
-	# 		pos1 = advance_by(hail1, 1)
-	# 		pos2 = advance_by(hail2, 2)
+	def binary_search(lower_t, upper_t):
+		if DEBUG: print('searching within', lower_t, upper_t)
+		lower_t_dir, lower_t_error = trace_line_at(lower_t)
+		if lower_t_error < EPSILON:
+			return lower_t, lower_t_dir
+		upper_t_dir, upper_t_error = trace_line_at(upper_t)
+		if upper_t_error < EPSILON:
+			return upper_t, upper_t_dir
 
-	# 		delta = (pos2[0] - pos1[0], pos2[1] - pos1[1], pos2[2] - pos1[2])
-	# 		origin = ((pos1[0] - delta[0], pos1[1] - delta[1], pos1[2] - delta[2]), delta)
+		if upper_t - lower_t < 2:
+			raise ValueError('this should not happen')
 
-	# 		if DEBUG and (advance_by(origin, 1) != pos1 or advance_by(origin, 2) != pos2): raise ValueError("FCK")
+		mid_t = lower_t + (upper_t - lower_t) // 2
+		_, mid_t_error = trace_line_at(mid_t)
+		_, mid_t_minus_1_error = trace_line_at(mid_t - 1)
+		if DEBUG: print('errors', lower_t_error, mid_t_error, upper_t_error)
 
-	# 		# matched_hails = {hail1, hail2}
-	# 		found = True
-	# 		for t in range(3, len(hailstones) + 1):
-	# 			target = advance_by(origin, t)
-	# 			hail_t = hailstones_over_time[t - 1].get(target)
-	# 			# if hail_t == None or hail_t in matched_hails:
-	# 			# 	break
-	# 			# matched_hails.add(hail_t)
-	# 			if hail_t == None:
-	# 				found = False
-	# 				break
-	# 		# if len(matched_hails) == len(hailstones):
-	# 		if found:
-	# 			print('EUREKA', origin)
+		if mid_t_minus_1_error < mid_t_error:
+			return binary_search(lower_t, mid_t)
+		else:
+			return binary_search(mid_t, upper_t)
 
-DEBUG = True
+	t, direction = binary_search(1, max_t)
+	direction = intify(direction)
+	print(t, direction)
+
+	A = advance_by(hailstones[0], t)
+	origin = A - (direction * t)
+
+	origin_sum = np.sum(origin)
+	print(filename, 'origin_sum', origin_sum)
+
+DEBUG = False
+EPSILON = 0.001
+
 solve('24_sample.txt')
-# solve('24_input.txt')
+solve('24_input.txt')
