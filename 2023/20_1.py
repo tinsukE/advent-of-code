@@ -69,6 +69,6 @@ def solve_1(filename):
 		sum_highs += highs
 	print(filename, 'lows * highs =', sum_lows * sum_highs)
 
-solve_1('20_sample1.txt')
-solve_1('20_sample2.txt')
-solve_1('20_input.txt')
+solve_1('20_sample1.txt') # 32000000
+solve_1('20_sample2.txt') # 11687500
+solve_1('20_input.txt') # 818723272

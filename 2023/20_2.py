@@ -1,6 +1,6 @@
 # https://adventofcode.com/2023/day/20
 
-from time import time
+from math import lcm
 
 def parse_input(filename):
 	modules = {}
@@ -26,13 +26,14 @@ def parse_input(filename):
 
 	return modules
 
-def process_pulse(modules, pulses):
+def find_sources(modules, name):
+	return [source_name for source_name, module in modules.items() if name in module[2]]
+
+def process_pulse(modules, pulses, i, records):
 	while len(pulses) > 0:
 		sender, pulse_destination, pulse_value = pulses.pop(0)
-		# print(sender, '-', pulse_value, '->', pulse_destination)
-
-		if pulse_destination == 'rx' and not pulse_value:
-			return True
+		if sender in records and pulse_value == True:
+			records[sender].append(i)
 
 		module = modules.get(pulse_destination)
 		if module == None:
@@ -48,39 +49,38 @@ def process_pulse(modules, pulses):
 					pulses.append((pulse_destination, destination, value))
 		elif module[0] == '&':
 			module[1][sender] = pulse_value
-			# print(module)
 			value = any([not value for value in module[1].values()])
 			for destination in module[2]:
 				pulses.append((pulse_destination, destination, value))
 
-	return False
-
-def human_format(num):
-    num = float('{:.3g}'.format(num))
-    magnitude = 0
-    while abs(num) >= 1000:
-        magnitude += 1
-        num /= 1000.0
-    return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
-
 def solve(filename):
 	modules = parse_input(filename)
-	# print(modules)
+	if DEBUG:
+		for name, module in modules.items(): print(name, module)
 
-	start = time()
-	current_report_start = start
+	rx_sources = find_sources(modules, 'rx')
+	if DEBUG: print('rx_sources', rx_sources)
+	if len(rx_sources) != 1 or modules[rx_sources[0]][0] != '&':
+		raise ValueError('Only one & source expected for rx')
 
-	button_presses = 0
-	while True:
-		button_presses += 1
-		if process_pulse(modules, [(None, 'broadcaster', False)]):
-			break
+	rx_source_sources = find_sources(modules, rx_sources[0])
+	if DEBUG: print('rx_source_sources', rx_source_sources)
+	if any([modules[name][0] != '&' for name in rx_source_sources]):
+		raise ValueError('Only & sources expected for rx\'s source')
 
-		current_time = time()
-		if current_time - current_report_start > 5:
-			current_report_start = current_time
-			speed = button_presses / (current_time - start)
-			print('button_presses', human_format(button_presses), '@', human_format(speed), '/s')
-	print(filename, 'button_presses', button_presses)
+	records = dict([(name, []) for name in rx_source_sources])
 
+	for i in range(1, 50_000):
+		process_pulse(modules, [(None, 'broadcaster', False)], i, records)
+	
+	for name, record in records.items():
+		print(name, record)
+		for i, value in enumerate(record[1:]):
+			if value - record[i] != record[0]:
+				raise ValueError('Expected a constant interval for', name)
+
+	button_presses = lcm(*[record[0] for record in records.values()])
+	print(filename, 'button_presses to False -> rx', button_presses)
+
+DEBUG = True
 solve('20_input.txt')
