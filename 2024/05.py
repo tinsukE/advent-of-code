@@ -39,8 +39,7 @@ def insert_page(rules, page, corrected, start, end):
 	elif [corrected[middle], page] in rules:
 		insert_page(rules, page, corrected, middle + 1, end)
 	else:
-		print("FUCK")
-
+		print("FUDGE")
 
 def solve(filename):
 	(rules, updates) = parse_input(filename)
