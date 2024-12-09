@@ -1,5 +1,7 @@
 # https://adventofcode.com/2024/day/5
 
+from functools import cmp_to_key
+
 def parse_input(filename):
 	file = open(filename, 'r')
 	lines = [line.strip() for line in file.readlines()]
@@ -28,19 +30,6 @@ def is_correct_order(rules, update):
 
 	return True
 
-def insert_page(rules, page, corrected, start, end):
-	if start == end:
-		corrected.insert(start, page)
-		return
-
-	middle = start + int((end - start) / 2)
-	if [page, corrected[middle]] in rules:
-		insert_page(rules, page, corrected, start, middle)
-	elif [corrected[middle], page] in rules:
-		insert_page(rules, page, corrected, middle + 1, end)
-	else:
-		print("FUDGE")
-
 def solve(filename):
 	(rules, updates) = parse_input(filename)
 	
@@ -49,15 +38,17 @@ def solve(filename):
 
 	for update in updates:
 		if is_correct_order(rules, update):
-			print("correct update", update)
 			sum_correct_middles += int(update[int(len(update) / 2)])
 			continue
 
-		corrected = []
-		for page in update:
-			insert_page(rules, page, corrected, 0, len(corrected))
-			
-		print("correctED update", corrected)
+		def compare_page(a, b):
+			if [a, b] in rules:
+				return -1
+			if [b, a] in rules:
+				return 1
+			assert false, "Can't compare {} and {}".format(a, b)
+
+		corrected = sorted(update, key=cmp_to_key(compare_page))
 		sum_corrected_middles += int(corrected[int(len(corrected) / 2)])
 
 	print("sum_correct_middles", sum_correct_middles)
