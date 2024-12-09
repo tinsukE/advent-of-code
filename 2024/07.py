@@ -20,12 +20,7 @@ def op_mult(a, b):
 	return a * b
 
 def op_concat(a, b):
-	multiplier = 1
-	mult_b = b
-	while mult_b > 1:
-		mult_b = int(mult_b / 10)
-		multiplier *= 10
-	return a * multiplier + b
+	return int(str(a) + str(b))
 
 def is_possible(ops, value, numbers, current = None):
 	if current is None:
@@ -51,4 +46,4 @@ def solve(filename):
 	print("result_2", result)
 
 solve('07_sample.txt') # 3749, 11387
-solve('07_input.txt') # 303766880536, 64954130205514
+solve('07_input.txt') # 303766880536, 337041851384440
