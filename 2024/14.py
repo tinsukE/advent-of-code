@@ -47,5 +47,8 @@ def solve(filename, w, h, seconds = 100):
 solve('14_sample.txt', 11, 7)	# 12
 solve('14_input.txt', 101, 103)	# 218619120
 
+# XMAS	51	154	257 360 # 51 + 103x \ 
+#                                    > 7055
+# DNA	86 	187 288 389 # 86 + 101y /
 positions = solve('14_input.txt', 101, 103, 7055)
 print_area(positions, 101, 103)
