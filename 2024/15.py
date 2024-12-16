@@ -1,7 +1,5 @@
 # https://adventofcode.com/2024/day/15
 
-import math
-
 def parse_input(filename, expand = False):
 	file = open(filename, 'r')
 	warehouse = []
