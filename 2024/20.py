@@ -19,10 +19,6 @@ def print_grid(grid):
 			print(char, end='')
 		print()
 
-# DELTAS = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-# def neighbors(pos, step = 1):
-# 	return [(pos[0] + delta[0] * step, pos[1] + delta[1] * step) for delta in DELTAS]
-
 def neighbors(pos, step = 1):
 	ns = []
 	for di in range(-step, step + 1):
