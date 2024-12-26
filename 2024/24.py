@@ -90,6 +90,13 @@ def swap_wires(gates, a, b):
 	return set([a, b])
 
 def solve_2(filename):
+	# Any bit is determine by this form:
+	# z02 = (y02 XOR x02) XOR ((x01 AND y01) OR (ktt AND rvb))
+	# Where ktt and rvb are values used in the previous bit (less -> most significant)
+	# This allows us to inspect the sample addition (less -> most),
+	# find which bit is incorrect and manually determine which ports to swap.
+	# Rinse and repeat until the gates are fixed
+
 	initials, gates = parse_input(filename)
 	swapped_wires = set()
 
