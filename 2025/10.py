@@ -90,19 +90,10 @@ def solve_2(filename):
 		b = joltages
 
 		for i, joltage in enumerate(joltages):
-			row = []
-			for button in buttons:
-				row.append(1 if i in button else 0)
-			A.append(row)
-
-		# print('c', c)
-		# print('A', A)
-		# print('b', b)
+			A.append([1 if i in button else 0 for button in buttons])
 
 		res = linprog(c, A_eq=A, b_eq=b, integrality=3)
-
 		print('x', res.x)
-
 		sum_presses += round(sum(res.x))
 
 	print('sum_presses', sum_presses)
@@ -111,4 +102,4 @@ solve_1('10_sample.txt') # 7
 solve_1('10_input.txt') # 441
 
 solve_2('10_sample.txt') # 33
-solve_2('10_input.txt') # ?
+solve_2('10_input.txt') # 18559
